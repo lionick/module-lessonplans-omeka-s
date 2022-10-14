@@ -1,0 +1,20 @@
+<?php
+$translate = $this->plugin('translate');
+$this->htmlElement('body')->appendAttribute('class', 'add lesson-plans');
+?>
+
+<?php echo $this->pageTitle($translate('New Lesson Plan'), 1, $translate('Lesson Plans')); ?>
+<?php $this->trigger('view.add.before'); ?>
+<?php
+echo $this->partial('omeka/admin/item/form.phtml', [
+    'form' => $form,
+    'item' => null,
+    'mediaForms' => $mediaForms,
+    'submitLabel' => $translate('Add'),
+    'sectionNavEvent' => 'view.add.section_nav',
+    'action' => 'add',
+    'site' => $site,
+]);
+?>
+
+<?php $this->trigger('view.add.after'); ?>
