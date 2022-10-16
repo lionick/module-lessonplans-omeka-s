@@ -8,6 +8,7 @@ use Omeka\Media\Ingester\Manager;
 use Omeka\Stdlib\Message;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
+use Omeka\Api\Exception as ApiException;
 
 class LessonPlanController extends AbstractActionController
 {
@@ -24,6 +25,63 @@ class LessonPlanController extends AbstractActionController
         $this->mediaIngesters = $mediaIngesters;
     }
 
+    public function configureAction()
+    {
+        $form = $this->getForm(ResourceForm::class);
+        $form->setAttribute('action', $this->url()->fromRoute(null, [], true));
+        $form->setAttribute('enctype', 'multipart/form-data');
+        $form->setAttribute('id', 'configure-lesson-plan');
+
+        $site = $this->currentSite();
+        try {
+            $configuration = $this->api()->search('lesson-plan-settings', [ 'site_id' => $site->id()])->getContent();
+        } catch (ApiException\NotFoundException $e) {
+            // do nothing
+        }
+        if ($this->getRequest()->isPost()) {
+            $data = $this->params()->fromPost();
+            // Prevent the API from setting sites automatically if no sites are set.        
+            $data['o:item_set_id'] = $data['item_set_id'] ?? [];
+            $data['o:site'] = $site->id() ?? [];
+            $form->setData($data);
+            if ($form->isValid()) {
+                
+                if(empty($configuration))
+                    $response = $this->api($form)->create('lesson-plan-settings', $data);
+                else {     
+                    $response = $this->api($form)->update('lesson-plan-settings', $configuration[0]->id(), $data);
+                }
+
+                if ($response) {
+                    $message = new Message(
+                        'Configuration saved successfully');
+                    $message->setEscapeHtml(false);
+                    $this->messenger()->addSuccess($message);
+                    $site = $this->currentSite();
+
+                    $view = new ViewModel;
+                    $view->setVariable('form', $form);
+                    $view->setVariable('site', $this->currentSite());
+                    if(empty($configuration)) {
+                        $view->setVariable('item_set_id', $data['o:item_set_id']);
+                    }
+                    return $view;
+
+                }
+            } else {
+                $this->messenger()->addFormErrors($form);
+            }
+        }
+
+        $view = new ViewModel;
+        $view->setVariable('form', $form);
+        $view->setVariable('site', $this->currentSite());
+        if(!empty($configuration)) {
+            $view->setVariable('item_set_id', $configuration[0]->getJsonLd()["o:item_set_id"]->getId());
+        }
+        return $view;
+    }
+
     public function searchAction()
     {
         $view = new ViewModel;
@@ -34,11 +92,27 @@ class LessonPlanController extends AbstractActionController
     public function browseAction()
     {
        
-        //$site = $this->currentSite();
-        $params = "site_id=" . $this->currentSite()->id();
         $this->setBrowseDefaults('created');
-        // Item Set Id must be a configuration?
-        $response = $this->api()->search('items', array("item_set_id"=> "7285", "site_id"=> $this->currentSite()->id()) + $this->params()->fromQuery());
+        try {
+            $configuration = $this->api()->search('lesson-plan-settings', [ 'site_id' => $this->currentSite()->id()])->getContent();        
+            //var_dump($data['o:site']);
+        } catch (ApiException\NotFoundException $e) {
+            // do nothing
+        }
+        if(empty($configuration)) {
+            $message = new Message(
+                'No configuration found. Please configure first the module.');
+            $message->setEscapeHtml(false);
+            $this->messenger()->addWarning($message);
+
+            $view = new ViewModel;
+            $view->setVariable('site', $this->currentSite());
+            $view->setVariable('items', array());
+            $view->setVariable('resources', array());
+            return $view;
+        }
+        $itemSetId = $configuration[0]->getJsonLd()["o:item_set_id"]->getId();
+        $response = $this->api()->search('items', array("item_set_id"=> $itemSetId, "site_id"=> $this->currentSite()->id()) + $this->params()->fromQuery());
         $this->paginator($response->getTotalResults());
 
         $formDeleteSelected = $this->getForm(ConfirmForm::class);
@@ -251,6 +325,14 @@ class LessonPlanController extends AbstractActionController
         $site = $this->currentSite();
         $view->setVariable('site', $site);
         $view->setVariable('mediaForms', $this->getMediaForms());
+        try {
+            $configuration = $this->api()->search('lesson-plan-settings', [ 'site_id' => $site->id()])->getContent();
+            $view->setVariable('item_set_default', $configuration[0]->getJsonLd()["o:item_set_id"]);
+            //var_dump($data['o:site']);
+        } catch (ApiException\NotFoundException $e) {
+            // do nothing
+
+        }
         return $view;
     }
 

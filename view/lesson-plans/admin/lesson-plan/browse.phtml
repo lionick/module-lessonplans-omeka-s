@@ -98,7 +98,16 @@ $sortHeadings = [
                 <?php if ($item->userIsAllowed('update') || $item->userIsAllowed('delete')): ?>
                 <input type="checkbox" name="resource_ids[]" value="<?php echo $item->id(); ?>" aria-label="<?php echo $translate('Select item'); ?>">
                 <?php endif; ?>
-                <?php echo $item->linkPretty(); ?>
+                <?php
+                echo $this->hyperlink($item->title(), $this->url(
+                    'admin/site/slug/lesson-plan/lesson_plan-id',
+                    [
+                        'controller' => 'lesson-plan',
+                        'site-slug' => $site->slug(),
+                        'id' => $item->id()
+                    ]
+                ));
+                 ?>
                 <?php if (!$item->isPublic()): ?>
                     <span class="o-icon-private" aria-label="<?php echo $translate('Private'); ?>"></span>
                 <?php endif; ?>

@@ -37,6 +37,7 @@ $form->prepare();
     <?php echo $this->partial('omeka/admin/item/manage-item-sets', [
         'item' => $item,
         'site' => !empty($site) ? $site : null,
+        'itemSetDefault' => !empty($itemSetDefault) ? $itemSetDefault : null,
     ]); ?>
 </fieldset>
 

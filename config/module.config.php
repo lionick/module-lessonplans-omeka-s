@@ -34,7 +34,7 @@ return [
     ],
     'api_adapters' => [
         'invokables' => [
-           // 'lesson-plans' => Api\Adapter\ItemAdapter::class,
+           'lesson-plan-settings' => LessonPlans\Api\Adapter\LessonPlanSettingsAdapter::class,
            'lesson-plans' => LessonPlans\Api\Adapter\LessonPlanAdapter::class,
         ]
     ],
@@ -58,6 +58,13 @@ return [
                         'visible' => true,
                         'label' => 'Add Lesson Plan',
                         'action' => 'add',
+                        'useRouteMatch' => true,
+                    ],
+                    [
+                        'route' => 'admin/site/slug/lesson-plan/action',
+                        'visible' => true,
+                        'label' => 'Configure Lesson Plan Settings',
+                        'action' => 'configure',
                         'useRouteMatch' => true,
                     ],
                     [
@@ -154,14 +161,17 @@ return [
             ],
         ],
     ],
-    // 'entity_manager' => [
+     'entity_manager' => [
     //     'is_dev_mode' => false,
-    //     'mapping_classes_paths' => [
-    //         OMEKA_PATH . '/modules/LessonPlan/src/Entity',
-    //     ],
+        'mapping_classes_paths' => [
+            OMEKA_PATH . '/modules/LessonPlans/src/Entity',
+        ],
+        'proxy_paths' => [
+            OMEKA_PATH. '/data/doctrine-proxies',
+        ],
     //     'resource_discriminator_map' => [
     //        // 'LessonPlansEntity\LessonPlan' => LessonPlans\Entity\LessonPlan::class,
     //        // 'LessonPlans\Entity\LessonPlanMedia' => LessonPlans\Entity\LessonPlanMedia::class,
     //     ],
-    // ],
+     ],
 ];

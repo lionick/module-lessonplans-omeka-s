@@ -1,0 +1,24 @@
+<?php
+$translate = $this->plugin('translate');
+$escape = $this->plugin('escapeHtml');
+$formLabel = $this->plugin('formLabel');
+$formElement = $this->plugin('formElement');
+$form->prepare();
+$this->htmlElement('body')->appendAttribute('class', 'add lesson-plans');
+?>
+<?php echo $this->pageTitle($translate('Configure Lesson Plans'), 1, $translate('Lesson Plans')); ?>
+
+
+<?php echo $this->form()->openTag($form);?>
+<input type="hidden" name="site_id" value="<?php echo $site->id();?>"/>
+Set default item set id for Lesson Plans: <input type="text" name="item_set_id" value="<?php echo !empty($item_set_id) ? $item_set_id : ""; ?>"/>
+<?php $this->trigger('view.add.before'); ?>
+
+
+<?php echo $formElement($form->get('csrf')); ?>
+<div id="page-actions">
+
+    <button type="submit" name="save-configuration-submit"><?php echo $escape("Save Configuration"); ?></button>
+</div>
+<?php $this->trigger('view.add.after'); ?>
+<?php echo $this->form()->closeTag(); ?>
