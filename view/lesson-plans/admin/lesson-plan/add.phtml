@@ -14,7 +14,7 @@ echo $this->partial('omeka/admin/item/form.phtml', [
     'sectionNavEvent' => 'view.add.section_nav',
     'action' => 'add',
     'site' => $site,
-    'itemSetDefault' => $item_set_default,
+    'itemSetDefault' => !empty($item_set_default) ? $item_set_default : null,
 ]);
 ?>
 

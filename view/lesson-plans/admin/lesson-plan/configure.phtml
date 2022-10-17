@@ -11,7 +11,18 @@ $this->htmlElement('body')->appendAttribute('class', 'add lesson-plans');
 
 <?php echo $this->form()->openTag($form);?>
 <input type="hidden" name="site_id" value="<?php echo $site->id();?>"/>
-Set default item set id for Lesson Plans: <input type="text" name="item_set_id" value="<?php echo !empty($item_set_id) ? $item_set_id : ""; ?>"/>
+<div class="field">
+<div class="field-meta"> <label>Set default Item Set for Lesson Plans: </label></div>
+<div class="inputs">
+    <select name="item_set_id">
+    <option value="" disabled="disabled" <?php echo empty($item_set_id) ? "selected" : ""; ?>>Select Default Item Set for Lesson Plans</option>
+    <?php foreach($itemSets as $itemSet):?>
+    <option value="<?php echo $itemSet->id()?>" <?php echo !empty($item_set_id) && $item_set_id == $itemSet->id()? "selected" : ""; ?>><?php echo $itemSet->title() ." (". $itemSet->owner()->name() .")"?></option>
+    <?php endforeach;?>
+    </select>
+    </div>
+</div>
+
 <?php $this->trigger('view.add.before'); ?>
 
 

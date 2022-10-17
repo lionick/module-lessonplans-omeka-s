@@ -44,6 +44,7 @@ $form->prepare();
 <fieldset id="sites" class="section" aria-labelledby="sites-label">
     <?php echo $this->partial('omeka/admin/item/manage-sites', [
         'item' => $item,
+        'site' => !empty($site) ? $site : null,
     ]); ?>
 </fieldset>
 

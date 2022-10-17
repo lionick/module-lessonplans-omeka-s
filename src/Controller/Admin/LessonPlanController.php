@@ -62,8 +62,12 @@ class LessonPlanController extends AbstractActionController
                     $view = new ViewModel;
                     $view->setVariable('form', $form);
                     $view->setVariable('site', $this->currentSite());
-                    if(empty($configuration)) {
+                    $view->setVariable('itemSets', $this->api()->search('item_sets')->getContent());
+                    if(empty($configuration))  { //for 1st time save
                         $view->setVariable('item_set_id', $data['o:item_set_id']);
+                    }
+                    else {
+                        $view->setVariable('item_set_id', $configuration[0]->getJsonLd()["o:item_set_id"]->getId());
                     }
                     return $view;
 
@@ -76,6 +80,7 @@ class LessonPlanController extends AbstractActionController
         $view = new ViewModel;
         $view->setVariable('form', $form);
         $view->setVariable('site', $this->currentSite());
+        $view->setVariable('itemSets', $this->api()->search('item_sets')->getContent());
         if(!empty($configuration)) {
             $view->setVariable('item_set_id', $configuration[0]->getJsonLd()["o:item_set_id"]->getId());
         }
@@ -327,11 +332,14 @@ class LessonPlanController extends AbstractActionController
         $view->setVariable('mediaForms', $this->getMediaForms());
         try {
             $configuration = $this->api()->search('lesson-plan-settings', [ 'site_id' => $site->id()])->getContent();
-            $view->setVariable('item_set_default', $configuration[0]->getJsonLd()["o:item_set_id"]);
+            
             //var_dump($data['o:site']);
         } catch (ApiException\NotFoundException $e) {
             // do nothing
 
+        }
+        if(!empty($configuration)){
+            $view->setVariable('item_set_default', $configuration[0]->getJsonLd()["o:item_set_id"]);
         }
         return $view;
     }

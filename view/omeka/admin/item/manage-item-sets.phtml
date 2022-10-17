@@ -12,7 +12,7 @@ foreach ($itemSetRepresentations as $itemSet) {
     ];
 }
 
-// Have to add the Lesson Plans item set, but not to all items add, only those created through site section
+// Have to add the Lesson Plans' Item Set, but not to all items add, only those created through site section
 
 if(!empty($this->site) && !empty($this->site->slug()) && !empty($itemSetDefault)) {
     $itemSets=array_merge($itemSets, array(array('id' => $itemSetDefault->getId(), 'title' => $itemSetDefault->getTitle(), 'email' => null)));
