@@ -72,7 +72,11 @@ return [
                         'visible' => false,
                         
                     ],
-                    
+                    [
+                        'route' => 'admin/site/slug/lesson-plan/lesson_plan-id',
+                        'visible' => false,
+                        
+                    ],
                 ],
             ],
         ],
