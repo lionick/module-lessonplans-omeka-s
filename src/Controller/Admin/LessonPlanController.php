@@ -222,8 +222,7 @@ class LessonPlanController extends AbstractActionController
         $site = $this->currentSite();
         return $this->redirect()->toRoute(
             'admin/site/slug/lesson-plan/action',
-            ['action' =>  'browse', 'site-slug' => $site->slug()],
-            //true
+            ['action' =>  'browse', 'site-slug' => $site->slug()]
         );
         //return $this->redirect()->toRoute(null, ['action' => 'browse'], true);
         // return $this->redirect()->toRoute(
@@ -315,8 +314,7 @@ class LessonPlanController extends AbstractActionController
                     //return ViewModel('site' => $site)
                     return $this->redirect()->toRoute(
                         'admin/site/slug/lesson-plan/lesson_plan-id',
-                        ['id' =>  $response->getContent()->id(), 'site-slug' => $site->slug()],
-                        //true
+                        ['id' =>  $response->getContent()->id(), 'site-slug' => $site->slug()]
                     );
                     //return $this->redirect()->toUrl($response->getContent()->url());
                 }
