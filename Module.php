@@ -6,9 +6,19 @@ use Omeka\Module\AbstractModule;
 use Laminas\ServiceManager\ServiceLocatorInterface;
 use Laminas\View\Model\ViewModel;
 use Laminas\Mvc\Controller\AbstractController;
+use Laminas\EventManager\SharedEventManagerInterface;
+use Laminas\EventManager\Event;
+use AdvancedSearch\Indexer\IndexerInterface;
+use Omeka\Entity\Resource;
+use Omeka\Stdlib\Message;
 
 class Module extends AbstractModule
 {
+
+    /**
+     * @var bool
+     */
+    protected $isBatchUpdate;
      
     /**
      * Get this module's configuration array.
@@ -26,6 +36,194 @@ class Module extends AbstractModule
         $connection->exec('CREATE TABLE lesson_plan_settings (id INT AUTO_INCREMENT NOT NULL, item_set_id INT DEFAULT NULL, site_id INT DEFAULT NULL, INDEX IDX_3F0C845D960278D7 (item_set_id), UNIQUE INDEX UNIQ_3F0C845DF6BD1646 (site_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ENGINE = InnoDB');
         $connection->exec('ALTER TABLE lesson_plan_settings ADD CONSTRAINT FK_3F0C845D960278D7 FOREIGN KEY (item_set_id) REFERENCES item_set (id)');
         $connection->exec('ALTER TABLE lesson_plan_settings ADD CONSTRAINT FK_3F0C845DF6BD1646 FOREIGN KEY (site_id) REFERENCES site (id)');
+    }
+
+    public function attachListeners(SharedEventManagerInterface $sharedEventManager): void
+    {
+        
+        $sharedEventManager->attach(
+            \LessonPlans\Api\Adapter\LessonPlanAdapter::class,
+            'api.create.post',
+            [$this, 'updateSearchEngine']
+        );
+        $sharedEventManager->attach(
+            \LessonPlans\Api\Adapter\LessonPlanAdapter::class,
+            'api.batch_update.pre',
+            [$this, 'preBatchUpdateSearchEngine']
+        );
+        // $sharedEventManager->attach(
+        //     \LessonPlans\Api\Adapter\LessonPlanAdapter::class,
+        //     'api.batch_update.post',
+        //     [$this, 'postBatchUpdateSearchEngine']
+        // );
+        $sharedEventManager->attach(
+            \LessonPlans\Api\Adapter\LessonPlanAdapter::class,
+            'api.update.post',
+            [$this, 'updateSearchEngine']
+        );
+        $sharedEventManager->attach(
+            \LessonPlans\Api\Adapter\LessonPlanAdapter::class,
+            'api.delete.post',
+            [$this, 'updateSearchEngine']
+        );
+
+        $sharedEventManager->attach(
+            \LessonPlans\Api\Adapter\LessonPlanAdapter::class,
+            'api.create.post',
+            [$this, 'updateSearchEngine']
+        );
+        $sharedEventManager->attach(
+            \LessonPlans\Api\Adapter\LessonPlanAdapter::class,
+            'api.batch_update.pre',
+            [$this, 'preBatchUpdateSearchEngine']
+        );
+        // $sharedEventManager->attach(
+        //     \LessonPlans\Api\Adapter\LessonPlanAdapter::class,
+        //     'api.batch_update.post',
+        //     [$this, 'postBatchUpdateSearchEngine']
+        // );
+        $sharedEventManager->attach(
+            \LessonPlans\Api\Adapter\LessonPlanAdapter::class,
+            'api.update.post',
+            [$this, 'updateSearchEngine']
+        );
+        $sharedEventManager->attach(
+            \LessonPlans\Api\Adapter\LessonPlanAdapter::class,
+            'api.delete.post',
+            [$this, 'updateSearchEngine']
+        );
+    }
+
+    public function preBatchUpdateSearchEngine(Event $event): void
+    {
+        // This is a background job if there is no route match.
+        $routeMatch = $this->getServiceLocator()->get('application')->getMvcEvent()->getRouteMatch();
+        $this->isBatchUpdate = !empty($routeMatch);
+    }
+
+    public function postBatchUpdateSearchEngine(Event $event): void
+    {
+        if (!$this->isBatchUpdate) {
+            return;
+        }
+
+        $serviceLocator = $this->getServiceLocator();
+        $api = $serviceLocator->get('Omeka\ApiManager');
+
+        $request = $event->getParam('request');
+        $requestResource = $request->getResource();
+        $response = $event->getParam('response');
+        $resources = $response->getContent();
+        if($requestResource == "lesson-plans")
+        {
+            $requestResource = "items";
+        }
+        /** @var \AdvancedSearch\Api\Representation\SearchEngineRepresentation[] $searchEngines */
+        $searchEngines = $api->search('search_engines')->getContent();
+        foreach ($searchEngines as $searchEngine) {
+            if (in_array($requestResource, $searchEngine->setting('resources', []))) {
+                $indexer = $searchEngine->indexer();
+                try {
+                    $indexer->indexResources($resources);
+                } catch (\Exception $e) {
+                    $services = $this->getServiceLocator();
+                    $logger = $services->get('Omeka\Logger');
+                    $logger->err(new Message(
+                        'Unable to batch index metadata for search engine "%s": %s', // @translate
+                        $searchEngine->name(), $e->getMessage()
+                    ));
+                    $messenger = $services->get('ControllerPluginManager')->get('messenger');
+                    $messenger->addWarning(new Message(
+                        'Unable to batch update the search engine "%s": see log.', // @translate
+                        $searchEngine->name()
+                    ));
+                }
+            }
+        }
+
+        $this->isBatchUpdate = false;
+    }
+
+    public function updateSearchEngine(Event $event): void
+    {
+        if ($this->isBatchUpdate) {
+            return;
+        }
+        $serviceLocator = $this->getServiceLocator();
+        $api = $serviceLocator->get('Omeka\ApiManager');
+
+        $request = $event->getParam('request');
+        $response = $event->getParam('response');
+        $requestResource = $request->getResource();
+        if($requestResource == "lesson-plans")
+        {
+            $requestResource = "items";
+        }
+        /** @var \AdvancedSearch\Api\Representation\SearchEngineRepresentation[] $searchEngines */
+        $searchEngines = $api->search('search_engines')->getContent();
+        foreach ($searchEngines as $searchEngine) {
+            if (in_array($requestResource, $searchEngine->setting('resources', []))) {
+                $indexer = $searchEngine->indexer();
+                if ($request->getOperation() == 'delete') {
+                    $id = $request->getId();
+                    $this->deleteIndexResource($indexer, $requestResource, $id);
+                } else {
+                    $resource = $response->getContent();
+                    $this->updateIndexResource($indexer, $resource);
+                }
+            }
+        }
+    }
+
+    /**
+     * Update the index in search engine for a resource.
+     *
+     * @param IndexerInterface $indexer
+     * @param Resource $resource
+     */
+    protected function updateIndexResource(IndexerInterface $indexer, Resource $resource): void
+    {
+        try {
+            $indexer->indexResource($resource);
+        } catch (\Exception $e) {
+            $services = $this->getServiceLocator();
+            $logger = $services->get('Omeka\Logger');
+            $logger->err(new Message(
+                'Unable to index metadata of resource #%d for search: %s', // @translate
+                $resource->getId(), $e->getMessage()
+            ));
+            $messenger = $services->get('ControllerPluginManager')->get('messenger');
+            $messenger->addWarning(new Message(
+                'Unable to update the search index for resource #%d: see log.', // @translate
+                $resource->getId()
+            ));
+        }
+    }
+
+    /**
+     * Delete the index for the resource in search engine.
+     *
+     * @param IndexerInterface $indexer
+     * @param string $resourceName
+     * @param int $id
+     */
+    protected function deleteIndexResource(IndexerInterface $indexer, $resourceName, $id): void
+    {
+        try {
+            $indexer->deleteResource($resourceName, $id);
+        } catch (\Exception $e) {
+            $services = $this->getServiceLocator();
+            $logger = $services->get('Omeka\Logger');
+            $logger->err(new Message(
+                'Unable to delete the search index for resource #%d: %s', // @translate
+                $id, $e->getMessage()
+            ));
+            $messenger = $services->get('ControllerPluginManager')->get('messenger');
+            $messenger->addWarning(new Message(
+                'Unable to delete the search index for the deleted resource #%d: see log.', // @translate
+                $id
+            ));
+        }
     }
 
 }
