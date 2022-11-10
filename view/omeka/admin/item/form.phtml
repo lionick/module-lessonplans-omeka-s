@@ -50,17 +50,17 @@ $form->prepare();
 
 <div id="page-actions">
     <?php if ($item && $item->isPublic() || (!isset($item)) && !$this->setting('default_to_private')) : ?>
-    <?php echo $this->hyperlink('', '#', [
-        'class' => 'o-icon-public button',
-        'title' => $translate('Make private'),
-    ]); ?>
-    <input type="hidden" name="o:is_public" value="1">
-    <?php else: ?>
-    <?php echo $this->hyperlink('', '#', [
-        'class' => 'o-icon-private button',
-        'title' => $translate('Make public'),
-    ]); ?>
-    <input type="hidden" name="o:is_public" value="0">
+        <?php echo $this->hyperlink('', '#', [
+            'class' => 'o-icon-public button',
+            'title' => $translate('Make private'),
+        ]); ?>
+        <input type="hidden" name="o:is_public" value="1">
+    <?php else : ?>
+        <?php echo $this->hyperlink('', '#', [
+            'class' => 'o-icon-private button',
+            'title' => $translate('Make public'),
+        ]); ?>
+        <input type="hidden" name="o:is_public" value="0">
     <?php endif; ?>
     <?php echo (isset($deleteButton)) ? $deleteButton : ''; ?>
     <?php echo $this->cancelButton(); ?>
@@ -74,3 +74,36 @@ $form->prepare();
 <?php echo $this->form()->closeTag(); ?>
 
 <?php echo $this->partial('common/resource-form-templates.phtml'); ?>
+<script type="text/javascript">
+    $(window).on('load', function() {
+
+        $("#resource-template-select").on('change', function(event) {
+            $("textarea").attr("disabled", "disabled")
+            setTimeout(function() {
+                $("textarea").attr("disabled", false)
+                $("div[data-property-term='dcterms:title'] textarea").focus()
+                $("div[data-property-term='dcterms:title'] textarea").on(
+                    'keyup',
+                    function(event) {
+                        var stt = $(this).val();
+                        $("div[data-property-term='edu:relatedMeaning'] textarea").val(stt);
+                    });
+            }, 1000)
+
+        })
+
+        $("div[data-property-term='dcterms:title'] textarea").on(
+            'keyup',
+            function(event) {
+                var stt = $(this).val();
+                $("div[data-property-term='edu:relatedMeaning'] textarea").val(stt);
+            });
+
+        if ($("#resource-template-select").val() == "") {
+            // Set Lesson Plan Template
+            $("#resource-template-select").val(8).change();
+            $("#resource_template_select_chosen a span").text("Lesson Plan");
+        }
+
+    })
+</script>

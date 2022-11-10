@@ -11,6 +11,9 @@ use Laminas\EventManager\Event;
 use AdvancedSearch\Indexer\IndexerInterface;
 use Omeka\Entity\Resource;
 use Omeka\Stdlib\Message;
+use Laminas\EventManager\Event as ZendEvent;
+use Laminas\Mvc\MvcEvent;
+
 
 class Module extends AbstractModule
 {
@@ -20,6 +23,69 @@ class Module extends AbstractModule
      */
     protected $isBatchUpdate;
      
+    public function onBootstrap(MvcEvent $event)
+    {
+        parent::onBootstrap($event);
+
+        $acl = $this->getServiceLocator()->get('Omeka\Acl');
+        
+        $acl->allow(
+            'editor',
+            [
+                'LessonPlans\Controller\Admin\LessonPlan'
+            ],
+            [
+                'index',
+                'browse',
+                'show',
+                'show-details',
+            ]
+        );
+        $acl->allow(
+            'editor',
+            [
+                'LessonPlans\Controller\Admin\LessonPlan'
+            ],
+            ['sidebar-select', 'search']
+        );
+        $acl->allow(
+            'editor',
+            [
+                'LessonPlans\Controller\Admin\LessonPlan',
+                'LessonPlans\Api\Adapter\LessonPlanSettingsAdapter'
+            ],
+            [
+                'add',
+                'edit',
+                'delete',
+                'delete-confirm',
+                'read',
+                'search'
+            ]
+        );
+        $acl->allow(
+            'editor',
+            [
+                'LessonPlans\Api\Adapter\LessonPlanSettingsAdapter',
+                //'Omeka\Api\Adapter\SiteAdapter',
+            ],
+            [
+                'create',
+                'update',
+                'delete',
+            ]
+        );
+        $acl->allow(
+            'editor',
+            [
+                'LessonPlans\Api\Adapter\LessonPlanSettingsAdapter'
+            ],
+            [
+                'batch_update',
+                'batch_delete',
+            ]
+        );
+    }
     /**
      * Get this module's configuration array.
      *
@@ -92,6 +158,42 @@ class Module extends AbstractModule
             'api.delete.post',
             [$this, 'updateSearchEngine']
         );
+
+        $sharedEventManager->attach(
+            'Omeka\Api\Adapter\SiteAdapter',
+            'UserIsAllowed',
+            [$this, 'navigationPageIsAllowed']
+        );
+    }
+
+    /**
+     * Determine whether a navigation page is allowed.
+     *
+     * @param ZendEvent $event
+     * @return bool
+     */
+    public function navigationPageIsAllowed(ZendEvent $event)
+    {
+        $accepted = true;
+        $params = $event->getParams();
+        $acl = $params['acl'];
+        $page = $params['page'];
+        var_dump($acl);
+        exit;
+        if (!$acl) {
+            return $accepted;
+        }
+
+        $resource = $page->getResource();
+        $privilege = $page->getPrivilege();
+        
+        if ($resource || $privilege) {
+            $accepted = $acl->hasResource($resource)
+                && $acl->userIsAllowed($resource, $privilege);
+        }
+
+        $event->stopPropagation();
+        return $accepted;
     }
 
     public function preBatchUpdateSearchEngine(Event $event): void
