@@ -77,7 +77,7 @@ $form->prepare();
 <script type="text/javascript">
     $(window).on('load', function() {
 
-        $("#resource-template-select").on('change', function(event) {
+        $(".lesson-plans #resource-template-select").on('change', function(event) {
             $("textarea").attr("disabled", "disabled")
             setTimeout(function() {
                 $("textarea").attr("disabled", false)
@@ -92,17 +92,17 @@ $form->prepare();
 
         })
 
-        $("div[data-property-term='dcterms:title'] textarea").on(
+        $(".lesson-plans div[data-property-term='dcterms:title'] textarea").on(
             'keyup',
             function(event) {
                 var stt = $(this).val();
                 $("div[data-property-term='edu:relatedMeaning'] textarea").val(stt);
             });
 
-        if ($("#resource-template-select").val() == "") {
+        if ($(".lesson-plans #resource-template-select").val() == "") {
             // Set Lesson Plan Template
-            $("#resource-template-select").val(8).change();
-            $("#resource_template_select_chosen a span").text("Lesson Plan");
+            $(".lesson-plans #resource-template-select").val(8).change();
+            $(".lesson-plans #resource_template_select_chosen a span").text("Lesson Plan");
         }
 
     })
