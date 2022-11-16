@@ -9,18 +9,77 @@ $this->htmlElement('body')->appendAttribute('class', 'add lesson-plans');
 <?php echo $this->pageTitle($translate('Configure Lesson Plans'), 1, $translate('Lesson Plans')); ?>
 
 
-<?php echo $this->form()->openTag($form);?>
-<input type="hidden" name="site_id" value="<?php echo $site->id();?>"/>
+<?php echo $this->form()->openTag($form); ?>
+<input type="hidden" name="site_id" value="<?php echo $site->id(); ?>" />
 <div class="field">
-<div class="field-meta"> <label>Set default Item Set for Lesson Plans: </label></div>
-<div class="inputs">
-    <select name="item_set_id">
-    <option value="" disabled="disabled" <?php echo empty($item_set_id) ? "selected" : ""; ?>>Select Default Item Set for Lesson Plans</option>
-    <?php foreach($itemSets as $itemSet):?>
-    <option value="<?php echo $itemSet->id()?>" <?php echo !empty($item_set_id) && $item_set_id == $itemSet->id()? "selected" : ""; ?>><?php echo $itemSet->title() ." (". $itemSet->owner()->name() .")"?></option>
-    <?php endforeach;?>
-    </select>
+    <div class="field-meta"> 
+        <label>Set default Item Set for Lesson Plans: </label>
+        <div class="field-description">
+            Set a default Item Set to be prefilled when adding a Lesson Plan.
+        </div>
     </div>
+    <div class="inputs">
+        <select name="item_set_id">
+            <option value="" disabled="disabled" <?php echo empty($item_set_id) ? "selected" : ""; ?>>Select Default Item Set for Lesson Plans</option>
+            <?php foreach ($itemSets as $itemSet) : ?>
+                <option value="<?php echo $itemSet->id() ?>" <?php echo !empty($item_set_id) && $item_set_id == $itemSet->id() ? "selected" : ""; ?>><?php echo $itemSet->title() . " (" . $itemSet->owner()->name() . ")" ?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+</div>
+<div class="field">
+    <div class="field-meta"> <label>Set default Resource Template for Lesson Plans: </label>
+        <div class="field-description">
+            Set a default Resource Template to be preselected when adding a Lesson Plan.
+        </div>
+    </div>
+    <div class="inputs">
+        <select name="resource_template_id">
+            <option value="" disabled="disabled" <?php echo empty($resource_template_id) ? "selected" : ""; ?>>Select Default Resource Template for Lesson Plans</option>
+            <?php foreach ($resourceTemplates as $resourceTemplate) : ?>
+                <option value="<?php echo $resourceTemplate->id() ?>" <?php echo !empty($resource_template_id) && $resource_template_id == $resourceTemplate->id() ? "selected" : ""; ?>>
+                    <?php echo $resourceTemplate->label() ?>
+                </option>
+                <?php if (!empty($resource_template_id) && $resource_template_id == $resourceTemplate->id()) {
+                    $selected_template = $resourceTemplate;
+                }
+                ?>
+            <?php endforeach; ?>
+        </select>
+    </div>
+</div>
+<div class="field">
+    <div class="field-meta"> <label>Set default Property for Indexer: </label>
+        <div class="field-description">This property will copy the dc:title. The purpose is
+            to be used for searching, including information only for the Lesson Plans.
+        </div>
+    </div>
+<?php
+// if there is a selected template stored then override properties
+if (!empty($selected_template)) {
+    $properties = $selected_template->ResourceTemplateProperties();
+?>    
+    <div class="inputs">
+        <select name="property_id">
+            <option value="" disabled="disabled" <?php echo empty($property_id) ? "selected" : ""; ?>>Select Default Property for Solr Indexer</option>
+            <?php foreach ($properties as $property) : ?>
+                <option value="<?php echo $property->property()->id() ?>" data-vocabulary="<?php echo $property->property()->vocabulary()->id() ?>" <?php echo !empty($property_id) && $property_id == $property->property()->id() ? "selected" : ""; ?>><?php echo $property->property()->label() //." (". $resourceTemplate->owner()->name() .")"
+                                                                                                                                                                                                                                                            ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+
+<?php
+} else {
+?>
+    <div class="inputs">
+        <select name="property_id">
+            <option value="" disabled="disabled" <?php echo empty($property_id) ? "selected" : ""; ?>>Select Default Property for Solr Indexer</option>
+        </select>
+    </div>
+
+<?php } ?>
 </div>
 
 <?php $this->trigger('view.add.before'); ?>
@@ -33,3 +92,27 @@ $this->htmlElement('body')->appendAttribute('class', 'add lesson-plans');
 </div>
 <?php $this->trigger('view.add.after'); ?>
 <?php echo $this->form()->closeTag(); ?>
+<script type="text/javascript">
+    // When selecting resource template, automatically load the values for properties (each resource template has its own properties)
+    $("select[name='resource_template_id']").on(
+            'change',
+            function() {
+                $("select[name='property_id'] option[disabled!=disabled]").remove()
+                $("select[name='property_id'] option[disabled=disabled]").attr("selected","selected")
+                templateId = $(this).val()
+                var url = '/omeka-s/api/resource_templates' + '/' + templateId;
+
+                $.get(url, function(data) {
+                    data['o:resource_template_property'].forEach(function(resource_template_property) {
+                        
+                            $.get(resource_template_property['o:property']['@id'], function(resource_template_propertyData) {
+                                
+                                $("select[name='property_id']").append(`<option value="${resource_template_propertyData['o:id']}">
+                                       ${resource_template_propertyData['o:label']}
+                                  </option>`);
+                            })
+                        })
+                })
+            })
+    
+</script>

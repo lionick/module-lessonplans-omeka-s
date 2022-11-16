@@ -13,7 +13,7 @@ use Omeka\Entity\Resource;
 use Omeka\Stdlib\Message;
 use Laminas\EventManager\Event as ZendEvent;
 use Laminas\Mvc\MvcEvent;
-
+use Composer\Semver\Comparator;
 
 class Module extends AbstractModule
 {
@@ -64,6 +64,18 @@ class Module extends AbstractModule
             ]
         );
         $acl->allow(
+            null,
+            [
+               
+                'LessonPlans\Api\Adapter\LessonPlanSettingsAdapter'
+            ],
+            [
+                
+                'read',
+                'search'
+            ]
+        );
+        $acl->allow(
             'editor',
             [
                 'LessonPlans\Api\Adapter\LessonPlanSettingsAdapter',
@@ -99,9 +111,27 @@ class Module extends AbstractModule
     public function install(ServiceLocatorInterface $services)
     {
         $connection = $services->get('Omeka\Connection');
-        $connection->exec('CREATE TABLE lesson_plan_settings (id INT AUTO_INCREMENT NOT NULL, item_set_id INT DEFAULT NULL, site_id INT DEFAULT NULL, INDEX IDX_3F0C845D960278D7 (item_set_id), UNIQUE INDEX UNIQ_3F0C845DF6BD1646 (site_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ENGINE = InnoDB');
+        //$connection->exec('CREATE TABLE lesson_plan_settings (id INT AUTO_INCREMENT NOT NULL, item_set_id INT DEFAULT NULL, site_id INT DEFAULT NULL, INDEX IDX_3F0C845D960278D7 (item_set_id), UNIQUE INDEX UNIQ_3F0C845DF6BD1646 (site_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ENGINE = InnoDB');
+        //$connection->exec('ALTER TABLE lesson_plan_settings ADD CONSTRAINT FK_3F0C845D960278D7 FOREIGN KEY (item_set_id) REFERENCES item_set (id)');
+        //$connection->exec('ALTER TABLE lesson_plan_settings ADD CONSTRAINT FK_3F0C845DF6BD1646 FOREIGN KEY (site_id) REFERENCES site (id)');
+
+        $connection->exec('CREATE TABLE lesson_plan_settings (id INT AUTO_INCREMENT NOT NULL, item_set_id INT DEFAULT NULL, site_id INT DEFAULT NULL, resource_template_id INT DEFAULT NULL, property_id INT DEFAULT NULL, INDEX IDX_3F0C845D960278D7 (item_set_id), UNIQUE INDEX UNIQ_3F0C845DF6BD1646 (site_id), UNIQUE INDEX UNIQ_3F0C845D549213EC (property_id), UNIQUE INDEX UNIQ_3F0C845D16131EA (resource_template_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ENGINE = InnoDB');
         $connection->exec('ALTER TABLE lesson_plan_settings ADD CONSTRAINT FK_3F0C845D960278D7 FOREIGN KEY (item_set_id) REFERENCES item_set (id)');
         $connection->exec('ALTER TABLE lesson_plan_settings ADD CONSTRAINT FK_3F0C845DF6BD1646 FOREIGN KEY (site_id) REFERENCES site (id)');
+        $connection->exec('ALTER TABLE lesson_plan_settings ADD CONSTRAINT FK_3F0C845D549213EC FOREIGN KEY (property_id) REFERENCES property (id)');
+        $connection->exec('ALTER TABLE lesson_plan_settings ADD CONSTRAINT FK_3F0C845D16131EA FOREIGN KEY (resource_template_id) REFERENCES resource_template (id)');
+    }
+
+    public function upgrade($oldVersion, $newVersion, ServiceLocatorInterface $services)
+    {
+        $connection = $services->get('Omeka\Connection');
+        if (Comparator::lessThan($oldVersion, '1.1')) { 
+            $sql = 'ALTER TABLE lesson_plan_settings ADD COLUMN resource_template_id INT;
+            ALTER TABLE lesson_plan_settings ADD property_id INT;'; // your upgrade SQL statements 
+            $connection->exec($sql);
+            $connection->exec('ALTER TABLE lesson_plan_settings ADD CONSTRAINT FK_3F0C845D549213EC FOREIGN KEY (property_id) REFERENCES property (id)');
+            $connection->exec('ALTER TABLE lesson_plan_settings ADD CONSTRAINT FK_3F0C845D16131EA FOREIGN KEY (resource_template_id) REFERENCES resource_template (id)');
+        }
     }
 
     public function attachListeners(SharedEventManagerInterface $sharedEventManager): void

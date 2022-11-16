@@ -64,14 +64,31 @@ class LessonPlanSettingsAdapter extends AbstractEntityAdapter
     ): void {
         if ($this->shouldHydrate($request, 'o:item_set_id')) {
             $itemSetAdapter = $this->getAdapter('item_sets');
-            $sitesAdapter = $this->getAdapter('sites');
+       
             if(is_numeric($request->getValue('o:item_set_id'))) {
                 $itemSet = $itemSetAdapter->findEntity($request->getValue('o:item_set_id'));
-                $entity->setItemSet($itemSet);
-                $site = $sitesAdapter->findEntity($request->getValue('o:site'));
-                $entity->setSite($site);
+                $entity->setItemSet($itemSet);               
             }
             
+        }
+        if($this->shouldHydrate($request, 'o:site')){
+            $sitesAdapter = $this->getAdapter('sites');
+            $site = $sitesAdapter->findEntity($request->getValue('o:site'));
+            $entity->setSite($site);
+        }
+        if($this->shouldHydrate($request, 'o:resource_template_id')){
+            $resourceAdapter = $this->getAdapter('resource_templates');
+            if(is_numeric($request->getValue('o:resource_template_id'))) {
+                $resource_template = $resourceAdapter->findEntity($request->getValue('o:resource_template_id'));
+                $entity->setResourceTemplate($resource_template);
+            }
+        }
+        if($this->shouldHydrate($request, 'o:property_id')){
+            $propertyAdapter = $this->getAdapter('properties');
+            if(is_numeric($request->getValue('o:property_id'))) {        
+                $property = $propertyAdapter->findEntity($request->getValue('o:property_id'));
+                $entity->setProperty($property);
+            }
         }
 
     }

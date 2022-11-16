@@ -31,11 +31,16 @@
 namespace LessonPlans\Api\Representation;
 
 use Omeka\Api\Representation\AbstractEntityRepresentation;
-use Omeka\Stdlib\Message;
+use Omeka\Api\Representation\PropertyRepresentation;
 
 
 class LessonPlanSettingsRepresentation extends AbstractEntityRepresentation
 {
+
+    public function getControllerName()
+    {
+        return 'lesson-plan-settings';
+    }
 
     public function getJsonLdType()
     {
@@ -45,9 +50,34 @@ class LessonPlanSettingsRepresentation extends AbstractEntityRepresentation
     public function getJsonLd()
     {
          $entity = $this->resource;
+         
+        
+        $idProperty = $this->idProperty();
+        //var_dump($entity->getProperty());
+        
          return [
              'o:site' => $entity->getSite(),
              'o:item_set_id' => $entity->getItemSet(),
+             'o:resource_template_id' => $entity->getResourceTemplate(),
+             'o:property_id' => $entity->getProperty(),
+             //'o:property_id' => $idProperty->getId(),
          ];
+    }
+
+     /**
+     * Return the description property of this resource template.
+     *
+     * @return PropertyRepresentation
+     */
+    public function idProperty()
+    {
+       
+        $propertyAdapter = $this->getAdapter('properties');
+        
+        return $propertyAdapter->getRepresentation($this->resource->getProperty());
+        
+        // return $media;
+        // return new PropertyRepresentation(
+        //     $this->resource->getProperty(), $this->getServiceLocator());
     }
 }

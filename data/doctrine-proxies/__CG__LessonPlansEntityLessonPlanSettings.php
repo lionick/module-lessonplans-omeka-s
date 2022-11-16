@@ -66,10 +66,10 @@ class LessonPlanSettings extends \LessonPlans\Entity\LessonPlanSettings implemen
     public function __sleep()
     {
         if ($this->__isInitialized__) {
-            return ['__isInitialized__', 'id', 'item_set', 'site'];
+            return ['__isInitialized__', 'id', 'item_set', 'site', 'property', 'resource_template'];
         }
 
-        return ['__isInitialized__', 'id', 'item_set', 'site'];
+        return ['__isInitialized__', 'id', 'item_set', 'site', 'property', 'resource_template'];
     }
 
     /**
@@ -176,6 +176,50 @@ class LessonPlanSettings extends \LessonPlans\Entity\LessonPlanSettings implemen
     }
 
     
+    /**
+     * {@inheritDoc}
+     */
+    public function setResourceTemplate($resource_template)
+    {
+
+        $this->__initializer__ && $this->__initializer__->__invoke($this, 'setResourceTemplate', [$resource_template]);
+
+        return parent::setResourceTemplate($resource_template);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getResourceTemplate()
+    {
+
+        $this->__initializer__ && $this->__initializer__->__invoke($this, 'getResourceTemplate', []);
+
+        return parent::getResourceTemplate();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setProperty($property)
+    {
+
+        $this->__initializer__ && $this->__initializer__->__invoke($this, 'setProperty', [$property]);
+
+        return parent::setProperty($property);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getProperty()
+    {
+
+        $this->__initializer__ && $this->__initializer__->__invoke($this, 'getProperty', []);
+
+        return parent::getProperty();
+    }
+
     /**
      * {@inheritDoc}
      */

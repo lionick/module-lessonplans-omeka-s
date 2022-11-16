@@ -15,6 +15,10 @@ echo $this->partial('omeka/admin/item/form.phtml', [
     'action' => 'add',
     'site' => $site,
     'itemSetDefault' => !empty($item_set_default) ? $item_set_default : null,
+    'resourceTemplateDefault' => !empty($resource_template_default) ? $resource_template_default : false,
+    'propertyDefault' => !empty($property_default) ? $property_default : false,
+    'propertyTermDefault' => !empty($property_term_default) ? $property_term_default : false,
+    'resourceTemplateLabelDefault' => !empty($resource_template_label_default) ? $resource_template_label_default : false,
 ]);
 ?>
 

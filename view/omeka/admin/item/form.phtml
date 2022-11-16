@@ -75,6 +75,12 @@ $form->prepare();
 
 <?php echo $this->partial('common/resource-form-templates.phtml'); ?>
 <script type="text/javascript">
+    // resourceTemplateId that will be preselected for Lesson Plans
+    resourceTemplateDefault = <?php echo (!empty($resourceTemplateDefault)) ? $resourceTemplateDefault->getId() : "'".false."'"; ?>;
+    // resourceTemplateLabel
+    resourceTemplateLabelDefault = <?php echo (!empty($resourceTemplateLabelDefault)) ? "'". $resourceTemplateLabelDefault. "'" : "'".false."'"; ?>;
+    // property term that will copy the dc:title field (must be present at the form)
+    propertyTermDefault = <?php echo (!empty($propertyTermDefault)) ? "'". $propertyTermDefault. "'" : "'".false."'"; ?>;
     $(window).on('load', function() {
 
         $(".lesson-plans #resource-template-select").on('change', function(event) {
@@ -86,23 +92,26 @@ $form->prepare();
                     'keyup',
                     function(event) {
                         var stt = $(this).val();
-                        $("div[data-property-term='edu:relatedMeaning'] textarea").val(stt);
+                        $("div[data-property-term='" + propertyTermDefault + "'] textarea").val(stt);
                     });
             }, 1000)
 
         })
-
-        $(".lesson-plans div[data-property-term='dcterms:title'] textarea").on(
+        if(propertyTermDefault){
+            $(".lesson-plans div[data-property-term='dcterms:title'] textarea").on(
             'keyup',
             function(event) {
                 var stt = $(this).val();
-                $("div[data-property-term='edu:relatedMeaning'] textarea").val(stt);
+                $("div[data-property-term='" + propertyTermDefault + "'] textarea").val(stt);
             });
-
+        }
         if ($(".lesson-plans #resource-template-select").val() == "") {
-            // Set Lesson Plan Template
-            $(".lesson-plans #resource-template-select").val(8).change();
-            $(".lesson-plans #resource_template_select_chosen a span").text("Lesson Plan");
+            if(resourceTemplateDefault)
+            {
+                $(".lesson-plans #resource-template-select").val(resourceTemplateDefault).change();
+                $(".lesson-plans #resource_template_select_chosen a span").text(resourceTemplateLabelDefault);
+            }
+            
         }
 
     })

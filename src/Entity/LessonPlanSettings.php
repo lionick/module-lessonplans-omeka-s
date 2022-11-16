@@ -34,6 +34,42 @@ class LessonPlanSettings extends AbstractEntity
      */
     protected $site;
 
+    /**
+     * @OneToOne(targetEntity="Omeka\Entity\ResourceTemplate",
+     * cascade={"persist", "remove"}
+     * )
+     * 
+     */
+    protected $resource_template;
+
+    /**
+     * @OneToOne(targetEntity="Omeka\Entity\Property",
+     * cascade={"persist", "remove"}
+     * )
+     * 
+     */
+    protected $property;
+
+    public function setResourceTemplate($resource_template)
+    {
+        $this->resource_template = $resource_template;
+    }
+
+    public function getResourceTemplate()
+    {
+        return $this->resource_template;
+    }
+
+    public function setProperty($property)
+    {
+        $this->property = $property;
+    }
+
+    public function getProperty()
+    {
+        return $this->property;
+    }
+
     public function setSite($site)
     {
         $this->site = $site;

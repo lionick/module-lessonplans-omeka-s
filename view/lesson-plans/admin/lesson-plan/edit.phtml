@@ -1,7 +1,7 @@
 <?php
 $translate = $this->plugin('translate');
 $escape = $this->plugin('escapeHtml');
-$this->htmlElement('body')->appendAttribute('class', 'edit items');
+$this->htmlElement('body')->appendAttribute('class', 'edit lesson-plans');
 $deleteButton = $item->userIsAllowed('delete')
     ? '<a href="#" class="delete button">' . $translate('Delete') . '</a>'
     : null;
@@ -23,6 +23,10 @@ echo $this->partial('omeka/admin/item/form.phtml', [
     'deleteButton' => $deleteButton,
     'sectionNavEvent' => 'view.edit.section_nav',
     'action' => 'edit',
+    'resourceTemplateDefault' => !empty($resource_template_default) ? $resource_template_default : false,
+    'propertyDefault' => !empty($property_default) ? $property_default : false,
+    'propertyTermDefault' => !empty($property_term_default) ? $property_term_default : false,
+    'resourceTemplateLabelDefault' => !empty($resource_template_label_default) ? $resource_template_label_default : false,
 ]);
 ?>
 

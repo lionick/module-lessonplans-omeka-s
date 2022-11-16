@@ -42,6 +42,8 @@ class LessonPlanController extends AbstractActionController
             $data = $this->params()->fromPost();
             // Prevent the API from setting sites automatically if no sites are set.        
             $data['o:item_set_id'] = $data['item_set_id'] ?? [];
+            $data['o:resource_template_id'] = $data['resource_template_id'] ?? [];
+            $data['o:property_id'] = $data['property_id'] ?? [];
             $data['o:site'] = $site->id() ?? [];
             $form->setData($data);
             if ($form->isValid()) {
@@ -63,11 +65,22 @@ class LessonPlanController extends AbstractActionController
                     $view->setVariable('form', $form);
                     $view->setVariable('site', $this->currentSite());
                     $view->setVariable('itemSets', $this->api()->search('item_sets')->getContent());
+                    $view->setVariable('resourceTemplates', $this->api()->search('resource_templates')->getContent());
+                    //$view->setVariable('properties', $this->api()->search('properties', ['resource_template_id' => 8])->getContent());
                     if(empty($configuration))  { //for 1st time save
                         $view->setVariable('item_set_id', $data['o:item_set_id']);
+                        $view->setVariable('resource_template_id', $data['o:resource_template_id']);
+                        $view->setVariable('property_id', $data['o:property_id']);
                     }
                     else {
                         $view->setVariable('item_set_id', $configuration[0]->getJsonLd()["o:item_set_id"]->getId());
+                        if(!empty($configuration[0]->getJsonLd()["o:resource_template_id"])){
+                            $view->setVariable('resource_template_id', $configuration[0]->getJsonLd()["o:resource_template_id"]->getId());
+                            
+                        }
+                        if(!empty($configuration[0]->getJsonLd()["o:property_id"])){
+                            $view->setVariable('property_id', $configuration[0]->getJsonLd()["o:property_id"]->getId());
+                        }
                     }
                     return $view;
 
@@ -81,7 +94,17 @@ class LessonPlanController extends AbstractActionController
         $view->setVariable('form', $form);
         $view->setVariable('site', $this->currentSite());
         $view->setVariable('itemSets', $this->api()->search('item_sets')->getContent());
+        $view->setVariable('resourceTemplates', $this->api()->search('resource_templates')->getContent());
+        $view->setVariable('blabla', $this->api()->search('resource_templates', ['label'=>'Lesson Plan'])->getContent());
+        //$view->setVariable('properties', $this->api()->search('properties', ['resource_template_id' => 8])->getContent());
         if(!empty($configuration)) {
+            if(!empty($configuration[0]->getJsonLd()["o:resource_template_id"])){
+                $view->setVariable('resource_template_id', $configuration[0]->getJsonLd()["o:resource_template_id"]->getId());
+                //$view->setVariable('properties',$configuration[0]->getJsonLd()["o:resource_template_id"]->getResourceTemplateProperties());
+            }
+            if(!empty($configuration[0]->getJsonLd()["o:property_id"])){
+                $view->setVariable('property_id', $configuration[0]->getJsonLd()["o:property_id"]->getId());
+            }
             $view->setVariable('item_set_id', $configuration[0]->getJsonLd()["o:item_set_id"]->getId());
         }
         return $view;
@@ -98,6 +121,7 @@ class LessonPlanController extends AbstractActionController
     {
        
         $this->setBrowseDefaults('created');
+
         try {
             $configuration = $this->api()->search('lesson-plan-settings', [ 'site_id' => $this->currentSite()->id()])->getContent();        
             //var_dump($data['o:site']);
@@ -331,13 +355,24 @@ class LessonPlanController extends AbstractActionController
         try {
             $configuration = $this->api()->search('lesson-plan-settings', [ 'site_id' => $site->id()])->getContent();
             
-            //var_dump($data['o:site']);
         } catch (ApiException\NotFoundException $e) {
             // do nothing
 
         }
         if(!empty($configuration)){
             $view->setVariable('item_set_default', $configuration[0]->getJsonLd()["o:item_set_id"]);
+            $view->setVariable('resource_template_default', $configuration[0]->getJsonLd()["o:resource_template_id"]);
+            if(!empty($configuration[0]->getJsonLd()["o:property_id"])) {
+                $view->setVariable('property_default', $configuration[0]->getJsonLd()["o:property_id"]);
+                $property = $this->api()->search('properties', 
+                    [ 'id' => $configuration[0]->getJsonLd()["o:property_id"]])->getContent();
+                $view->setVariable('property_term_default', $property[0]->term());         
+            }
+            if(!empty($configuration[0]->getJsonLd()["o:resource_template_id"])){
+                $resource_template = $this->api()->search('resource_templates', 
+                    [ 'id' => $configuration[0]->getJsonLd()["o:resource_template_id"]])->getContent();
+                $view->setVariable('resource_template_label_default',$resource_template[0]->label());
+            }
         }
         return $view;
     }
@@ -372,6 +407,26 @@ class LessonPlanController extends AbstractActionController
         }
 
         $view = new ViewModel;
+        $site = $this->currentSite();
+        try {
+            $configuration = $this->api()->search('lesson-plan-settings', [ 'site_id' => $site->id()])->getContent();
+        } catch (ApiException\NotFoundException $e) {
+            // do nothing
+        }
+        if(!empty($configuration)){
+            $view->setVariable('item_set_default', $configuration[0]->getJsonLd()["o:item_set_id"]);
+            $view->setVariable('resource_template_default', $configuration[0]->getJsonLd()["o:resource_template_id"]);
+            if(!empty($configuration[0]->getJsonLd()["o:property_id"])) {
+                $view->setVariable('property_default', $configuration[0]->getJsonLd()["o:property_id"]);
+                $resource_template = $this->api()->search('resource_templates', 
+                    [ 'id' => $configuration[0]->getJsonLd()["o:resource_template_id"]])->getContent();
+                $view->setVariable('resource_template_label_default',$resource_template[0]->label());
+                $property = $this->api()->search('properties', 
+                    [ 'id' => $configuration[0]->getJsonLd()["o:property_id"]])->getContent();
+                $view->setVariable('property_term_default', $property[0]->term());
+                
+            }
+        }
         $view->setVariable('form', $form);
         $view->setVariable('item', $item);
         $view->setVariable('resource', $item);
