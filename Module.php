@@ -53,6 +53,7 @@ class Module extends AbstractModule
             [
                 'LessonPlans\Controller\Admin\LessonPlan',
                 'LessonPlans\Api\Adapter\LessonPlanSettingsAdapter',
+                
             ],
             [
                 'add',
@@ -60,7 +61,8 @@ class Module extends AbstractModule
                 'delete',
                 'delete-confirm',
                 'read',
-                'search'
+                'search',
+                'configure',
             ]
         );
         $acl->allow(
@@ -79,7 +81,8 @@ class Module extends AbstractModule
             'editor',
             [
                 'LessonPlans\Api\Adapter\LessonPlanSettingsAdapter',
-                'LessonPlans\Api\Adapter\LessonPlanAdapter'
+                'LessonPlans\Api\Adapter\LessonPlanAdapter',
+                'LessonPlans\Entity\LessonPlanSettings'
             ],
             [
                 'create',
